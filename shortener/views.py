@@ -4,7 +4,10 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login, logout
 from django.core.exceptions import ValidationError
 from django.utils.timezone import now
+from django.utils import timezone
 from django.http import HttpResponseNotFound
+from django.conf import settings
+from django.shortcuts import render
 import random
 import string
 import re
@@ -53,12 +56,27 @@ def user_links(request):
     base_url = request.scheme + "://" + request.get_host()
 
     for link in links:
-        if link.expires_at < timezone.now():
+        time_left = link.expires_at - timezone.now()
+        if time_left.total_seconds() < 0:
             link.is_expired = True
+            link.time_left = "Expired"
         else:
             link.is_expired = False
+            days_left = time_left.days
+            hours_left = time_left.seconds // 3600
+            minutes_left = (time_left.seconds % 3600) // 60
+
+            if days_left > 0:
+                link.time_left = f"{days_left} days left"
+            elif hours_left > 0:
+                link.time_left = f"{hours_left} hours left"
+            elif minutes_left > 0:
+                link.time_left = f"{minutes_left} minutes left"
+            else:
+                link.time_left = "Less than a minute left"
 
     return render(request, 'shortener/user_links.html', {'links': links, 'base_url': base_url})
+
 
 def redirect_to_original(request, short_code):
     url_entry = get_object_or_404(ShortenedURL, short_code=short_code)

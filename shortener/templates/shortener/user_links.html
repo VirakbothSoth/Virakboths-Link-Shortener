@@ -9,7 +9,7 @@
                 <a href="{{ base_url }}/{{ link.short_code }}" target="_blank">
                     {{ link.short_code }}
                 </a>
-            </strong> -
+            </strong> - 
             {{ link.original_url|slice:"8:" }}
             <button class="copy-btn" data-clipboard-text="{{ base_url }}/{{ link.short_code }}">
                 Copy
@@ -20,11 +20,11 @@
                     Delete
                 </button>
             </form>
-            {% if not link.is_expired %}
-                <span>{{ link.expires_at|date:"Y-m-d H:i" }}</span>
-                <span>{{ link.expires_at|date:"D, M d" }} - {{ link.expires_at|timesince }} left</span>
-            {% else %}
+
+            {% if link.is_expired %}
                 <span>Expired</span>
+            {% else %}
+                <span>{{ link.time_left }}</span>
             {% endif %}
         </li>
     {% endfor %}
@@ -51,4 +51,3 @@
     });
 </script>
 {% endblock %}
-
