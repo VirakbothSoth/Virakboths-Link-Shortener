@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>Shorten a Link</h2>
+    <form class="form" method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Shorten URL</button>
+    </form>
+    {% if error %}
+        <p style="color: red;">{{ error }}</p>
+    {% endif %}
+
+    {% if shortened_url %}
+        <p>Shortened URL: <a href="{{ shortened_url }}" target="_blank">{{ shortened_url }}</a></p>
+    {% endif %}
+{% endblock %}
