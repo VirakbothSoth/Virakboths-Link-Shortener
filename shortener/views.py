@@ -3,10 +3,11 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login, logout
 from django.core.exceptions import ValidationError
+from django.utils.timezone import now
+from django.http import HttpResponseNotFound
 import random
 import string
 import re
-from urllib.parse import urlparse
 from .forms import URLForm
 from .models import ShortenedURL
 
@@ -33,42 +34,37 @@ def shorten_url(request):
         form = URLForm(request.POST)
         if form.is_valid():
             original_url = form.cleaned_data['original_url']
-
             short_code = ''.join(random.choices(string.ascii_letters + string.digits, k=5))
-
             shortened_url = ShortenedURL(
                 original_url=original_url,
                 short_code=short_code,
                 user=request.user
             )
             shortened_url.save()
-
             return redirect('user_links')
     else:
         form = URLForm()
-
     return render(request, 'shortener/index.html', {'form': form})
 
 
 @login_required
 def user_links(request):
     links = ShortenedURL.objects.filter(user=request.user)
-    return render(request, 'shortener/user_links.html', {'links': links})
+    base_url = request.scheme + "://" + request.get_host()
 
+    for link in links:
+        if link.expires_at < timezone.now():
+            link.is_expired = True
+        else:
+            link.is_expired = False
+
+    return render(request, 'shortener/user_links.html', {'links': links, 'base_url': base_url})
 
 def redirect_to_original(request, short_code):
     url_entry = get_object_or_404(ShortenedURL, short_code=short_code)
-    print(f"Redirecting user {request.user} to {url_entry.original_url}")
-    if request.method == "POST":
-        form = UserCreationForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user)
-            return redirect("shorten_url")
-    else:
-        form = UserCreationForm()
-
-    return render(request, "shortener/signup.html", {"form": form})
+    if url_entry.expires_at and url_entry.expires_at < now():
+        return HttpResponseNotFound("This shortened link has expired.")
+    return redirect(url_entry.original_url)
 
 
 def login_view(request):
@@ -80,7 +76,6 @@ def login_view(request):
             return redirect("shorten_url")
     else:
         form = AuthenticationForm()
-
     return render(request, "shortener/login.html", {"form": form})
 
 
@@ -94,9 +89,10 @@ def delete_link(request, short_code):
     try:
         link = ShortenedURL.objects.get(short_code=short_code, user=request.user)
         link.delete()
-        return redirect('user_links')
     except ShortenedURL.DoesNotExist:
-        return redirect('user_links')
+        pass
+    return redirect('user_links')
+
 
 def signup_view(request):
     if request.method == "POST":
@@ -108,7 +104,3 @@ def signup_view(request):
     else:
         form = UserCreationForm()
     return render(request, 'shortener/signup.html', {'form': form})
-
-def redirect_to_original(request, short_code):
-    url_entry = get_object_or_404(ShortenedURL, short_code=short_code)
-    return redirect(url_entry.original_url)

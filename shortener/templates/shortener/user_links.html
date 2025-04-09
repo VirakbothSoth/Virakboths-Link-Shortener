@@ -6,12 +6,12 @@
     {% for link in links %}
         <li class="activeshortlink">
             <strong>
-                <a href="http://127.0.0.1:8000/{{ link.short_code }}" target="_blank">
+                <a href="{{ base_url }}/{{ link.short_code }}" target="_blank">
                     {{ link.short_code }}
                 </a>
             </strong> -
             {{ link.original_url|slice:"8:" }}
-            <button class="copy-btn" data-clipboard-text="http://127.0.0.1:8000/{{ link.short_code }}">
+            <button class="copy-btn" data-clipboard-text="{{ base_url }}/{{ link.short_code }}">
                 Copy
             </button>
             <form action="{% url 'delete_link' link.short_code %}" method="POST" style="display: inline;">
@@ -20,6 +20,12 @@
                     Delete
                 </button>
             </form>
+            {% if not link.is_expired %}
+                <span>{{ link.expires_at|date:"Y-m-d H:i" }}</span>
+                <span>{{ link.expires_at|date:"D, M d" }} - {{ link.expires_at|timesince }} left</span>
+            {% else %}
+                <span>Expired</span>
+            {% endif %}
         </li>
     {% endfor %}
 </ul>
