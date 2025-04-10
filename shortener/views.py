@@ -94,7 +94,7 @@ def login_view(request):
             return redirect("shorten_url")
     else:
         form = AuthenticationForm()
-    return render(request, "shortener/login.html", {"form": form})
+    return render(request, "registration/login.html", {"form": form})
 
 
 def logout_view(request):
@@ -121,4 +121,4 @@ def signup_view(request):
             return redirect('user_links')
     else:
         form = UserCreationForm()
-    return render(request, 'shortener/signup.html', {'form': form})
+    return render(request, 'registration/signup.html', {'form': form})
