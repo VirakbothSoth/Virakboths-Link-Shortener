@@ -1,6 +1,7 @@
 # Link Shortener Web Application
 
 Submitted to CS50W, and got 1/1 score
+
 Please do NOT copy and submit this as your own work
 
 ## Overview
